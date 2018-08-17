@@ -30,7 +30,7 @@ services:
     build:
       context: php
       args:
-        version: 7.2
+        version: 7.1
       dockerfile: Dockerfile
     depends_on:
       - laravel
@@ -40,6 +40,7 @@ services:
       - ./..:/app/driver
       - laravel:/app/laravel
       - ./laravel/app/Stubs:/app/laravel/app/Stubs
+    tty: true
     networks:
       - default-net
   mysql:

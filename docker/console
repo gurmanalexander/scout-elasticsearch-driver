@@ -117,7 +117,7 @@ dk_tinker()
 
 dk_tests()
 {
-    dk_run php /app/driver/vendor/bin/phpunit -c /app/driver/phpunit.xml
+    dk_run php /app/driver/vendor/bin/phpunit -c /app/driver/
 }
 
 command=dk_${1:-help}
