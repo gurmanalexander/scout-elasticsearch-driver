@@ -3,9 +3,9 @@
 namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Core;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
+use BabenkoIvan\ScoutElasticsearchDriver\Tests\EnvTestCase;
 
-class PayloadTest extends AppTestCase
+class PayloadTest extends EnvTestCase
 {
     public function testKeyTransformation(): void
     {

@@ -2,24 +2,17 @@
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Infrastructure\EntityManagers;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Client as ClientContract;
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Namespaces\IndicesNamespace as IndicesNamespaceContract;
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
 use BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers\IndexManager;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
+use BabenkoIvan\ScoutElasticsearchDriver\Tests\EnvTestCase;
+use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
 
-class IndexManagerTest extends AppTestCase
+class IndexManagerTest extends EnvTestCase
 {
     /**
-     * @var IndicesNamespaceContract
+     * @var IndexStub
      */
-    private $indices;
-
-    /**
-     * @var Index
-     */
-    private $index;
+    private $indexStub;
 
     /**
      * @var IndexManager
@@ -29,65 +22,65 @@ class IndexManagerTest extends AppTestCase
     public function testExistsMethod(): void
     {
         $payload = (new Payload())
-            ->index($this->index->getName());
+            ->index($this->indexStub->getName());
 
-        $this->indices
+        $this->client->indices()
             ->create($payload->toArray());
 
-        $this->assertTrue($this->indexManager->exists($this->index));
+        $this->assertTrue($this->indexManager->exists($this->indexStub));
     }
 
     public function testCreateMethod(): void
     {
         $this->indexManager
-            ->create($this->index);
+            ->create($this->indexStub);
 
         $payload = (new Payload())
-            ->index($this->index->getName());
+            ->index($this->indexStub->getName());
 
-        $this->assertTrue($this->indices->exists($payload->toArray()));
+        $this->assertTrue($this->client->indices()->exists($payload->toArray()));
     }
 
     public function testDeleteMethod(): void
     {
         $payload = (new Payload())
-            ->index($this->index->getName());
+            ->index($this->indexStub->getName());
 
-        $this->indices
+        $this->client->indices()
             ->create($payload->toArray());
 
         $this->indexManager
-            ->delete($this->index);
+            ->delete($this->indexStub);
 
-        $this->assertFalse($this->indices->exists($payload->toArray()));
+        $this->assertFalse($this->client->indices()->exists($payload->toArray()));
     }
 
-    public function testUpdateSettingsMethodWithoutForcing(): void
+    public function testUpdateSettingsMethodWithoutForce(): void
     {
         $this->expectExceptionMessageRegExp('/.*?Can\'t update non dynamic settings.*?/');
 
         $payload = (new Payload())
-            ->index($this->index->getName());
+            ->index($this->indexStub->getName());
 
-        $this->indices
+        $this->client->indices()
             ->create($payload->toArray());
 
         $this->indexManager
-            ->updateSettings($this->index);
+            ->updateSettings($this->indexStub);
 
         $this->addToAssertionCount(1);
     }
 
-    public function testUpdateSettingsMethodWithForcing(): void
+    public function testUpdateSettingsMethodWithForce(): void
     {
         $payload = (new Payload())
-            ->index($this->index->getName());
+            ->index($this->indexStub->getName());
 
-        $this->indices
+        $this->client->indices()
             ->create($payload->toArray());
 
         $this->indexManager
-            ->updateSettings($this->index, true);
+            ->updateSettings($this->indexStub, true);
 
         $this->addToAssertionCount(1);
     }
@@ -96,17 +89,17 @@ class IndexManagerTest extends AppTestCase
     {
         // @formatted:off
         $payload = (new Payload())
-            ->index($this->index->getName())
+            ->index($this->indexStub->getName())
             ->body()
-                ->settings($this->index->getSettings())
+                ->settings($this->indexStub->getSettings())
             ->end();
         // @formatted:on
 
-        $this->indices
+        $this->client->indices()
             ->create($payload->toArray());
 
         $this->indexManager
-            ->updateMapping($this->index);
+            ->updateMapping($this->indexStub);
 
         $this->addToAssertionCount(1);
     }
@@ -117,12 +110,6 @@ class IndexManagerTest extends AppTestCase
     protected function setUp()
     {
         parent::setUp();
-
-        /** @var ClientContract $client */
-        $client = resolve(ClientContract::class);
-
-        $this->indices = $client->indices();
-        $this->indexManager = new IndexManager($client);
 
         // @formatter:off
         $mapping = (new Payload())
@@ -146,22 +133,7 @@ class IndexManagerTest extends AppTestCase
             ->end();
         // @formatter:on
 
-        $this->index = new Index('test', $mapping, $settings);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function tearDown()
-    {
-        parent::tearDown();
-
-        $payload = (new Payload())
-            ->index($this->index->getName())
-            ->toArray();
-
-        if ($this->indices->exists($payload)) {
-            $this->indices->delete($payload);
-        }
+        $this->indexStub = new IndexStub($mapping, $settings);
+        $this->indexManager = new IndexManager($this->client);
     }
 }

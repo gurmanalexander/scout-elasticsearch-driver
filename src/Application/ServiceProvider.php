@@ -4,8 +4,10 @@ namespace BabenkoIvan\ScoutElasticsearchDriver\Application;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Client as ClientContract;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\ClientFactory as ClientFactoryContract;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager as DocumentManagerContract;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\IndexManager as IndexManagerContract;
 use BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\Client\ClientFactory;
+use BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers\BulkDocumentManager;
 use BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers\IndexManager;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 
@@ -16,6 +18,7 @@ class ServiceProvider extends BaseServiceProvider
         $this->registerClientFactory();
         $this->registerClient();
         $this->registerIndexManager();
+        $this->registerDocumentManager();
     }
 
     public function boot(): void
@@ -40,6 +43,11 @@ class ServiceProvider extends BaseServiceProvider
     private function registerIndexManager(): void
     {
         $this->app->bindIf(IndexManagerContract::class, IndexManager::class);
+    }
+
+    private function registerDocumentManager(): void
+    {
+        $this->app->bindIf(DocumentManagerContract::class, BulkDocumentManager::class);
     }
 
     private function bootConfig(): void

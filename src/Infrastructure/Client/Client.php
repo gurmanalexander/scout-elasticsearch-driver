@@ -31,6 +31,24 @@ class Client implements ClientContract
     /**
      * @inheritdoc
      */
+    public function bulk(array $params): array
+    {
+        return $this->adapteeClient
+            ->bulk($params);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function search(array $params): array
+    {
+        return $this->adapteeClient
+            ->search($params);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function indices(): IndicesNamespaceContract
     {
         return $this->indicesNamespace;

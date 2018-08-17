@@ -10,14 +10,14 @@ class IndicesNamespace implements IndicesNamespaceContract
     /**
      * @var AdapteeIndicesNamespace
      */
-    private $adapteeIndicesNamespace;
+    private $adapteeIndices;
 
     /**
      * @param AdapteeIndicesNamespace $adapteeIndicesNamespace
      */
     public function __construct(AdapteeIndicesNamespace $adapteeIndicesNamespace)
     {
-        $this->adapteeIndicesNamespace = $adapteeIndicesNamespace;
+        $this->adapteeIndices = $adapteeIndicesNamespace;
     }
 
     /**
@@ -25,7 +25,7 @@ class IndicesNamespace implements IndicesNamespaceContract
      */
     public function exists(array $params): bool
     {
-        return $this->adapteeIndicesNamespace
+        return $this->adapteeIndices
             ->exists($params);
     }
 
@@ -34,7 +34,7 @@ class IndicesNamespace implements IndicesNamespaceContract
      */
     public function create(array $params): array
     {
-        return $this->adapteeIndicesNamespace
+        return $this->adapteeIndices
             ->create($params);
     }
 
@@ -43,7 +43,7 @@ class IndicesNamespace implements IndicesNamespaceContract
      */
     public function delete(array $params): array
     {
-        return $this->adapteeIndicesNamespace
+        return $this->adapteeIndices
             ->delete($params);
     }
 
@@ -52,7 +52,7 @@ class IndicesNamespace implements IndicesNamespaceContract
      */
     public function putSettings(array $params): array
     {
-        return $this->adapteeIndicesNamespace
+        return $this->adapteeIndices
             ->putSettings($params);
     }
 
@@ -61,7 +61,7 @@ class IndicesNamespace implements IndicesNamespaceContract
      */
     public function putMapping(array $params): array
     {
-        return $this->adapteeIndicesNamespace
+        return $this->adapteeIndices
             ->putMapping($params);
     }
 
@@ -70,7 +70,7 @@ class IndicesNamespace implements IndicesNamespaceContract
      */
     public function open(array $params): array
     {
-        return $this->adapteeIndicesNamespace
+        return $this->adapteeIndices
             ->open($params);
     }
 
@@ -79,7 +79,7 @@ class IndicesNamespace implements IndicesNamespaceContract
      */
     public function close(array $params): array
     {
-        return $this->adapteeIndicesNamespace
+        return $this->adapteeIndices
             ->close($params);
     }
 }

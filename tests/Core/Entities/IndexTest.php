@@ -2,17 +2,17 @@
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Core\Entities;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
+use BabenkoIvan\ScoutElasticsearchDriver\Tests\EnvTestCase;
+use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
 
-class IndexTest extends AppTestCase
+class IndexTest extends EnvTestCase
 {
     public function testNamePrefix(): void
     {
         config(['scout.prefix' => '']);
-        $this->assertSame('foo', (new Index('foo'))->getName());
+        $this->assertSame('test', (new IndexStub())->getName());
 
         config(['scout.prefix' => 'foo_']);
-        $this->assertSame('foo_bar', (new Index('bar'))->getName());
+        $this->assertSame('foo_test', (new IndexStub())->getName());
     }
 }
