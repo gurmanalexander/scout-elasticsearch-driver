@@ -33,6 +33,7 @@ services:
         version: 7.1
       dockerfile: Dockerfile
     depends_on:
+      - driver
       - laravel
       - mysql
       - elastic
