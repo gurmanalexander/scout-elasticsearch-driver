@@ -38,7 +38,7 @@ class IndexManager implements IndexManagerContract
     /**
      * @inheritdoc
      */
-    public function create(Index $index): void
+    public function create(Index $index): IndexManagerContract
     {
         $settings = $index->getSettings();
         $mapping = $index->getMapping();
@@ -59,24 +59,28 @@ class IndexManager implements IndexManagerContract
 
         $this->indices
             ->create($payload->toArray());
+
+        return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function delete(Index $index): void
+    public function delete(Index $index): IndexManagerContract
     {
         $payload = (new Payload())
             ->index($index->getName());
 
         $this->indices
             ->delete($payload->toArray());
+
+        return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function updateSettings(Index $index, bool $force = false): void
+    public function updateSettings(Index $index, bool $force = false): IndexManagerContract
     {
         $settings = $index->getSettings();
 
@@ -109,12 +113,14 @@ class IndexManager implements IndexManagerContract
             $this->indices
                 ->open($basePayload->toArray());
         }
+
+        return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function updateMapping(Index $index): void
+    public function updateMapping(Index $index): IndexManagerContract
     {
         $mapping = $index->getMapping();
 
@@ -136,5 +142,7 @@ class IndexManager implements IndexManagerContract
 
         $this->indices
             ->putMapping($payload->toArray());
+
+        return $this;
     }
 }

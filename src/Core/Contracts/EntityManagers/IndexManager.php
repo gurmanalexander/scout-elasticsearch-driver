@@ -14,22 +14,26 @@ interface IndexManager
 
     /**
      * @param Index $index
+     * @return self
      */
-    public function create(Index $index): void;
+    public function create(Index $index): self;
 
     /**
      * @param Index $index
+     * @return self
      */
-    public function delete(Index $index): void;
+    public function delete(Index $index): self;
 
     /**
      * @param Index $index
      * @param bool $force The force flag will cause index closing and reopening after update.
+     * @return self
      */
-    public function updateSettings(Index $index, bool $force = false): void;
+    public function updateSettings(Index $index, bool $force = false): self;
 
     /**
      * @param Index $index
+     * @return self
      */
-    public function updateMapping(Index $index): void;
+    public function updateMapping(Index $index): self;
 }

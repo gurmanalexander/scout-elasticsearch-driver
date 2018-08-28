@@ -2,10 +2,10 @@
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Core\Entities;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\EnvTestCase;
+use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
 use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
 
-class IndexTest extends EnvTestCase
+class IndexTest extends AppTestCase
 {
     public function testNamePrefix(): void
     {

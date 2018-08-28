@@ -6,12 +6,18 @@ use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentM
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Document;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
 use BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers\BulkDocumentManager;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\EnvTestCase;
+use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
 use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
+use Illuminate\Support\Collection;
 use stdClass;
 
-class BulkDocumentManagerTest extends EnvTestCase
+class BulkDocumentManagerTest extends AppTestCase
 {
+    /**
+     * @var IndexStub
+     */
+    private $index;
+
     /**
      * @var DocumentManagerContract
      */
@@ -19,22 +25,28 @@ class BulkDocumentManagerTest extends EnvTestCase
 
     public function testIndexMethodWithForce(): void
     {
-        $documents = collect([
-            new Document(1, (new Payload())->content('foo')),
-            new Document(2, (new Payload())->content('bar'))
-        ]);
+        $firstDocument = new Document(1, (new Payload())->content('first'));
+        $secondDocument = new Document(1, (new Payload())->content('second'));
+
+        $documents = collect([$firstDocument, $secondDocument]);
 
         $this->documentManager
-            ->index(new IndexStub(), $documents, true);
+            ->index($this->index, $documents, true);
 
-        $this->assertEquals([1, 2], $this->getIndexStubDocumentIds());
+        $this->assertEquals(
+            [
+                $firstDocument->getId() => $firstDocument->getFields()->toArray(),
+                $secondDocument->getId() => $secondDocument->getFields()->toArray()
+            ],
+            $this->getDocuments()->toArray()
+        );
     }
 
     public function testDeleteMethodWithForce(): void
     {
         // @formatter:off
         $payload = (new Payload())
-            ->index((new IndexStub())->getName())
+            ->index($this->index->getName())
             ->type('_doc')
             ->refresh('true')
             ->body()
@@ -65,9 +77,14 @@ class BulkDocumentManagerTest extends EnvTestCase
         ]);
 
         $this->documentManager
-            ->delete(new IndexStub(), $documents, true);
+            ->delete($this->index, $documents, true);
 
-        $this->assertEquals([2], $this->getIndexStubDocumentIds());
+        $this->assertEquals(
+            [
+                $payload['body'][2]['index']['_id'] => $payload['body'][3]->toArray()
+            ],
+            $this->getDocuments()->toArray()
+        );
     }
 
     /**
@@ -77,23 +94,24 @@ class BulkDocumentManagerTest extends EnvTestCase
     {
         parent::setUp();
 
+        $this->index = new IndexStub();
         $this->documentManager = new BulkDocumentManager($this->client);
 
         $payload = (new Payload())
-            ->index((new IndexStub())->getName());
+            ->index($this->index->getName());
 
         $this->client->indices()
             ->create($payload->toArray());
     }
 
     /**
-     * @return array
+     * @return Collection
      */
-    private function getIndexStubDocumentIds(): array
+    private function getDocuments(): Collection
     {
         // @formatter:off
         $payload = (new Payload())
-            ->index((new IndexStub())->getName())
+            ->index($this->index->getName())
             ->type('_doc')
             ->body()
                 ->query()
@@ -105,9 +123,8 @@ class BulkDocumentManagerTest extends EnvTestCase
         $result = $this->client
             ->search($payload->toArray());
 
-        $ids = array_pluck($result['hits']['hits'], '_id');
-        sort($ids, SORT_NUMERIC);
-
-        return $ids;
+        return collect($result['hits']['hits'])->mapWithKeys(function (array $hit) {
+            return [$hit['_id'] => $hit['_source']];
+        });
     }
 }

@@ -36,7 +36,9 @@ services:
       - driver
       - laravel
       - mysql
+      - mysql-test
       - elastic
+      - elastic-test
     volumes:
       - ./..:/app/driver
       - laravel:/app/laravel
@@ -53,12 +55,25 @@ services:
     volumes:
       - ./mysql/data:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: 2}3Av>3pWLPuP2
+      MYSQL_ROOT_PASSWORD: laravel
       MYSQL_DATABASE: laravel
     networks:
       - default-net
     ports:
       - 13306:3306
+  mysql-test:
+    build:
+      context: mysql
+      args:
+        version: 5.7
+      dockerfile: Dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_DATABASE: test
+    networks:
+      - default-net
+    ports:
+      - 23306:3306
   elastic:
     build:
       context: elastic
@@ -71,6 +86,16 @@ services:
       - default-net
     ports:
       - 19200:9200
+  elastic-test:
+    build:
+      context: elastic
+      args:
+        version: 6.2.4
+      dockerfile: Dockerfile
+    networks:
+      - default-net
+    ports:
+      - 29200:9200
   kibana:
     build:
       context: kibana

@@ -8,11 +8,12 @@ use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
 class IndexStub extends Index
 {
     /**
+     * @param string|null $name
      * @param Payload|null $mapping
      * @param Payload|null $settings
      */
-    public function __construct(Payload $mapping = null, Payload $settings = null)
+    public function __construct(string $name = null, Payload $mapping = null, Payload $settings = null)
     {
-        parent::__construct('test', $mapping, $settings);
+        parent::__construct($name ?? 'test', $mapping, $settings);
     }
 }

@@ -4,15 +4,15 @@ namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Infrastructure\EntityManage
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
 use BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers\IndexManager;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\EnvTestCase;
+use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
 use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
 
-class IndexManagerTest extends EnvTestCase
+class IndexManagerTest extends AppTestCase
 {
     /**
      * @var IndexStub
      */
-    private $indexStub;
+    private $index;
 
     /**
      * @var IndexManager
@@ -22,21 +22,21 @@ class IndexManagerTest extends EnvTestCase
     public function testExistsMethod(): void
     {
         $payload = (new Payload())
-            ->index($this->indexStub->getName());
+            ->index($this->index->getName());
 
         $this->client->indices()
             ->create($payload->toArray());
 
-        $this->assertTrue($this->indexManager->exists($this->indexStub));
+        $this->assertTrue($this->indexManager->exists($this->index));
     }
 
     public function testCreateMethod(): void
     {
         $this->indexManager
-            ->create($this->indexStub);
+            ->create($this->index);
 
         $payload = (new Payload())
-            ->index($this->indexStub->getName());
+            ->index($this->index->getName());
 
         $this->assertTrue($this->client->indices()->exists($payload->toArray()));
     }
@@ -44,13 +44,13 @@ class IndexManagerTest extends EnvTestCase
     public function testDeleteMethod(): void
     {
         $payload = (new Payload())
-            ->index($this->indexStub->getName());
+            ->index($this->index->getName());
 
         $this->client->indices()
             ->create($payload->toArray());
 
         $this->indexManager
-            ->delete($this->indexStub);
+            ->delete($this->index);
 
         $this->assertFalse($this->client->indices()->exists($payload->toArray()));
     }
@@ -60,13 +60,13 @@ class IndexManagerTest extends EnvTestCase
         $this->expectExceptionMessageRegExp('/.*?Can\'t update non dynamic settings.*?/');
 
         $payload = (new Payload())
-            ->index($this->indexStub->getName());
+            ->index($this->index->getName());
 
         $this->client->indices()
             ->create($payload->toArray());
 
         $this->indexManager
-            ->updateSettings($this->indexStub);
+            ->updateSettings($this->index);
 
         $this->addToAssertionCount(1);
     }
@@ -74,13 +74,13 @@ class IndexManagerTest extends EnvTestCase
     public function testUpdateSettingsMethodWithForce(): void
     {
         $payload = (new Payload())
-            ->index($this->indexStub->getName());
+            ->index($this->index->getName());
 
         $this->client->indices()
             ->create($payload->toArray());
 
         $this->indexManager
-            ->updateSettings($this->indexStub, true);
+            ->updateSettings($this->index, true);
 
         $this->addToAssertionCount(1);
     }
@@ -89,9 +89,9 @@ class IndexManagerTest extends EnvTestCase
     {
         // @formatted:off
         $payload = (new Payload())
-            ->index($this->indexStub->getName())
+            ->index($this->index->getName())
             ->body()
-                ->settings($this->indexStub->getSettings())
+                ->settings($this->index->getSettings())
             ->end();
         // @formatted:on
 
@@ -99,7 +99,7 @@ class IndexManagerTest extends EnvTestCase
             ->create($payload->toArray());
 
         $this->indexManager
-            ->updateMapping($this->indexStub);
+            ->updateMapping($this->index);
 
         $this->addToAssertionCount(1);
     }
@@ -133,7 +133,7 @@ class IndexManagerTest extends EnvTestCase
             ->end();
         // @formatter:on
 
-        $this->indexStub = new IndexStub($mapping, $settings);
+        $this->index = new IndexStub(null, $mapping, $settings);
         $this->indexManager = new IndexManager($this->client);
     }
 }

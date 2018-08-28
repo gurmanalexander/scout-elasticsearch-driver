@@ -24,7 +24,7 @@ class BulkDocumentManager implements DocumentManagerContract
     /**
      * @inheritdoc
      */
-    public function index(Index $index, Collection $collection, bool $force = false): void
+    public function index(Index $index, Collection $collection, bool $force = false): DocumentManagerContract
     {
         $payload = (new Payload())
             ->index($index->getName())
@@ -45,12 +45,14 @@ class BulkDocumentManager implements DocumentManagerContract
 
         $this->client
             ->bulk($payload->toArray());
+
+        return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function delete(Index $index, Collection $collection, bool $force = false): void
+    public function delete(Index $index, Collection $collection, bool $force = false): DocumentManagerContract
     {
         $payload = (new Payload())
             ->index($index->getName())
@@ -70,5 +72,7 @@ class BulkDocumentManager implements DocumentManagerContract
 
         $this->client
             ->bulk($payload->toArray());
+
+        return $this;
     }
 }

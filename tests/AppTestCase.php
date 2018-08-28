@@ -4,12 +4,11 @@ namespace BabenkoIvan\ScoutElasticsearchDriver\Tests;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Client as ClientContract;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
 use PHPUnit\Framework\TestCase;
 
-abstract class EnvTestCase extends TestCase
+abstract class AppTestCase extends TestCase
 {
     /**
      * @var Application
@@ -34,21 +33,31 @@ abstract class EnvTestCase extends TestCase
         $this->client = resolve(ClientContract::class);
     }
 
+    private function dropIndices(): void
+    {
+        $payload = (new Payload())->index('*');
+
+        $this->client->indices()
+            ->delete($payload->toArray());
+    }
+
+    protected function dropTables(): void
+    {
+        // todo
+    }
+
+    private function cleanup(): void
+    {
+        $this->dropIndices();
+        $this->dropTables();
+    }
+
     /**
      * @inheritdoc
      */
     protected function tearDown()
     {
         parent::tearDown();
-
-        $payload = (new Payload())
-            ->index((new IndexStub())->getName())
-            ->toArray();
-
-        $indices = $this->client->indices();
-
-        if ($indices->exists($payload)) {
-            $indices->delete($payload);
-        }
+        $this->cleanup();
     }
 }
