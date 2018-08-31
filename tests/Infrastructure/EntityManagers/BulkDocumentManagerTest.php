@@ -26,7 +26,7 @@ class BulkDocumentManagerTest extends AppTestCase
     public function testIndexMethodWithForce(): void
     {
         $firstDocument = new Document(1, (new Payload())->content('first'));
-        $secondDocument = new Document(1, (new Payload())->content('second'));
+        $secondDocument = new Document(2, (new Payload())->content('second'));
 
         $documents = collect([$firstDocument, $secondDocument]);
 
@@ -35,8 +35,12 @@ class BulkDocumentManagerTest extends AppTestCase
 
         $this->assertEquals(
             [
-                $firstDocument->getId() => $firstDocument->getFields()->toArray(),
-                $secondDocument->getId() => $secondDocument->getFields()->toArray()
+                1 => [
+                    'content' => 'first'
+                ],
+                2 => [
+                    'content' => 'second'
+                ]
             ],
             $this->getDocuments()->toArray()
         );
@@ -81,10 +85,62 @@ class BulkDocumentManagerTest extends AppTestCase
 
         $this->assertEquals(
             [
-                $payload['body'][2]['index']['_id'] => $payload['body'][3]->toArray()
+                2 => [
+                    'content' => 'bar'
+                ]
             ],
             $this->getDocuments()->toArray()
         );
+    }
+
+    public function testSearchMethod(): void
+    {
+        // @formatter:off
+        $createPayload = (new Payload())
+            ->index($this->index->getName())
+            ->type('_doc')
+            ->refresh('true')
+            ->body()
+                ->push()
+                    ->index()
+                        ->_id(1)
+                    ->end()
+                ->end()
+                ->push()
+                    ->content('foo')
+                ->end()
+                ->push()
+                    ->index()
+                        ->_id(2)
+                    ->end()
+                ->end()
+                ->push()
+                    ->content('bar')
+                ->end()
+            ->end();
+
+        $searchPayload = (new Payload())
+            ->query()
+                ->matchAll(new stdClass())
+            ->end()
+            ->{'\sort'}()
+                ->push()
+                    ->_id('asc')
+                ->end()
+            ->end();
+        // @formatter:on
+
+        $this->client
+            ->bulk($createPayload->toArray());
+
+        $documents = $this->documentManager
+            ->search($this->index, $searchPayload);
+
+        $this->assertCount(2, $documents);
+        $this->assertEquals(1, $documents->get(0)->getId());
+        $this->assertEquals(['content' => 'foo'], $documents->get(0)->getFields()->toArray());
+        $this->assertEquals(2, $documents->get(1)->getId());
+        $this->assertEquals(['content' => 'bar'], $documents->get(1)->getFields()->toArray());
     }
 
     /**

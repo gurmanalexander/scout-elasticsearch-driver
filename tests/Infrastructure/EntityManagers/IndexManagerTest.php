@@ -116,14 +116,14 @@ class IndexManagerTest extends AppTestCase
             ->index($this->index->getName());
 
         // @formatter:off
-        $settingsPayload = (clone $basePayload)
+        $createPayload = (clone $basePayload)
             ->body()
                 ->settings($this->index->getSettings())
             ->end();
         // @formatter:on
 
         $this->client->indices()
-            ->create($settingsPayload->toArray());
+            ->create($createPayload->toArray());
 
         $this->indexManager
             ->putMapping($this->index);

@@ -75,4 +75,25 @@ class BulkDocumentManager implements DocumentManagerContract
 
         return $this;
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function search(Index $index, Payload $payload): Collection
+    {
+        $payload = (new Payload())
+            ->index($index->getName())
+            ->type('_doc')
+            ->body($payload);
+
+        $response = $this->client
+            ->search($payload->toArray());
+
+        return collect($response['hits']['hits'])->map(function (array $hit) {
+            $id = $hit['_id'];
+            $fields = Payload::fromArray($hit['_source']);
+
+            return new Document($id, $fields);
+        });
+    }
 }

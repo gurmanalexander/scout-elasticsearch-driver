@@ -3,6 +3,7 @@
 namespace BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
 use Illuminate\Support\Collection;
 
 interface DocumentManager
@@ -22,4 +23,11 @@ interface DocumentManager
      * @return self
      */
     public function delete(Index $index, Collection $collection, bool $force = false): self;
+
+    /**
+     * @param Index $index
+     * @param Payload $payload
+     * @return Collection
+     */
+    public function search(Index $index, Payload $payload): Collection;
 }
