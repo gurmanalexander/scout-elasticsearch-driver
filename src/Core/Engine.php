@@ -4,7 +4,7 @@ namespace BabenkoIvan\ScoutElasticsearchDriver\Core;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager as DocumentManagerContract;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\IndexManager as IndexManagerContract;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Collection as BaseCollection;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine as ScoutEngine;
 
@@ -21,15 +21,23 @@ class Engine extends ScoutEngine
     private $documentManager;
 
     /**
+     * @var array
+     */
+    private $config;
+
+    /**
      * @param IndexManagerContract $indexManager
      * @param DocumentManagerContract $documentManager
+     * @param array $config
      */
     public function __construct(
         IndexManagerContract $indexManager,
-        DocumentManagerContract $documentManager
+        DocumentManagerContract $documentManager,
+        array $config = []
     ) {
         $this->indexManager = $indexManager;
         $this->documentManager = $documentManager;
+        $this->config = $config;
     }
 
     /**
@@ -37,11 +45,17 @@ class Engine extends ScoutEngine
      */
     public function update($models)
     {
-        $models->toSearchableDocumentsGroupedByIndex()
-            ->each(function (Collection $documents) {
-                $index = $documents->first()->getSearchableIndex();
-                $this->documentManager->index($index, $documents);
-            });
+        $config = $this->config;
+
+        $indices = $models->getSearchableIndices();
+        $documents = $models->toSearchableDocuments();
+
+        $documents->each(function (BaseCollection $indexDocuments, string $indexName) use ($indices, $config) {
+            $index = $indices->get($indexName);
+
+            $this->documentManager
+                ->index($index, $indexDocuments, $config['force_document_refresh']);
+        });
     }
 
     /**
@@ -49,11 +63,17 @@ class Engine extends ScoutEngine
      */
     public function delete($models)
     {
-        $models->toSearchableDocumentsGroupedByIndex()
-            ->each(function (Collection $documents) {
-                $index = $documents->first()->getSearchableIndex();
-                $this->documentManager->delete($index, $documents);
-            });
+        $config = $this->config;
+
+        $indices = $models->getSearchableIndices();
+        $documents = $models->toSearchableDocuments();
+
+        $documents->each(function (BaseCollection $indexDocuments, string $indexName) use ($indices, $config) {
+            $index = $indices->get($indexName);
+
+            $this->documentManager
+                ->delete($index, $indexDocuments, $config['force_document_refresh']);
+        });
     }
 
     /**
@@ -83,7 +103,7 @@ class Engine extends ScoutEngine
     /**
      * @inheritdoc
      */
-    public function map($results, $model)
+    public function map(Builder $builder, $results, $model)
     {
         // TODO: Implement map() method.
     }

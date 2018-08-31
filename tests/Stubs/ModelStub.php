@@ -31,7 +31,6 @@ class ModelStub extends Model
     public function __construct(array $attributes = [], Index $searchableIndex = null)
     {
         parent::__construct($attributes);
-
         $this->searchableIndex = $searchableIndex ?? new IndexStub();
     }
 

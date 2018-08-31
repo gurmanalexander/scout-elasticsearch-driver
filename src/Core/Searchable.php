@@ -33,13 +33,30 @@ trait Searchable
     public function registerSearchableMacros(): void
     {
         $this->registerScoutSearchableMacros();
-        $this->registerToSearchableDocumentsGroupedByIndexMacro();
+        $this->registerGetSearchableIndicesMacro();
+        $this->registerToSearchableDocumentsMacro();
 
     }
 
-    private function registerToSearchableDocumentsGroupedByIndexMacro(): void
+    private function registerGetSearchableIndicesMacro(): void
     {
-        BaseCollection::macro('toSearchableDocumentsGroupedByIndex', function () {
+        BaseCollection::macro('getSearchableIndices', function () {
+            $indices = collect();
+
+            $this->each(function (Model $model) use ($indices) {
+                $index = $model->getSearchableIndex();
+                $indexName = $index->getName();
+
+                $indices->put($indexName, $index);
+            });
+
+            return $indices;
+        });
+    }
+
+    private function registerToSearchableDocumentsMacro(): void
+    {
+        BaseCollection::macro('toSearchableDocuments', function () {
             $documents = collect();
 
             $this->each(function (Model $model) use ($documents) {

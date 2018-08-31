@@ -7,7 +7,7 @@ use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentM
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Document;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Collection as BaseCollection;
 
 class BulkDocumentManager implements DocumentManagerContract
 {
@@ -24,7 +24,7 @@ class BulkDocumentManager implements DocumentManagerContract
     /**
      * @inheritdoc
      */
-    public function index(Index $index, Collection $collection, bool $force = false): DocumentManagerContract
+    public function index(Index $index, BaseCollection $collection, bool $force = false): DocumentManagerContract
     {
         $payload = (new Payload())
             ->index($index->getName())
@@ -52,7 +52,7 @@ class BulkDocumentManager implements DocumentManagerContract
     /**
      * @inheritdoc
      */
-    public function delete(Index $index, Collection $collection, bool $force = false): DocumentManagerContract
+    public function delete(Index $index, BaseCollection $collection, bool $force = false): DocumentManagerContract
     {
         $payload = (new Payload())
             ->index($index->getName())
@@ -79,7 +79,7 @@ class BulkDocumentManager implements DocumentManagerContract
     /**
      * @inheritdoc
      */
-    public function search(Index $index, Payload $payload): Collection
+    public function search(Index $index, Payload $payload): BaseCollection
     {
         $payload = (new Payload())
             ->index($index->getName())

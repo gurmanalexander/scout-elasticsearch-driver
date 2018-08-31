@@ -23,7 +23,7 @@ class SearchableTest extends AppTestCase
         $this->assertSame($model->getAttributes(), $document->getFields()->toArray());
     }
 
-    public function testToSearchableDocumentsGroupedByIndexMethod(): void
+    public function testGetSearchableIndicesMethod(): void
     {
         $iphone6s = new ModelStub(
             [
@@ -44,7 +44,35 @@ class SearchableTest extends AppTestCase
         );
 
         /** @var Collection $documents */
-        $documents = collect([$iphone6s, $iphoneX])->toSearchableDocumentsGroupedByIndex();
+        $indices = collect([$iphone6s, $iphoneX])->getSearchableIndices();
+
+        $this->assertSame(['old', 'new'], $indices->keys()->all());
+        $this->assertEquals($indices->get('old'), $iphone6s->getSearchableIndex());
+        $this->assertEquals($indices->get('new'), $iphoneX->getSearchableIndex());
+    }
+
+    public function testToSearchableDocumentsMethod(): void
+    {
+        $iphone6s = new ModelStub(
+            [
+                'id' => 1,
+                'name' => 'iphone 6s',
+                'price' => 300
+            ],
+            new IndexStub('old')
+        );
+
+        $iphoneX = new ModelStub(
+            [
+                'id' => 2,
+                'name' => 'iphone x',
+                'price' => 1000
+            ],
+            new IndexStub('new')
+        );
+
+        /** @var Collection $documents */
+        $documents = collect([$iphone6s, $iphoneX])->toSearchableDocuments();
 
         $this->assertSame(['old', 'new'], $documents->keys()->all());
         $this->assertInstanceOf(Collection::class, $documents->get('old'));

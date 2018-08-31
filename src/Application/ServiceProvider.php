@@ -67,7 +67,8 @@ class ServiceProvider extends BaseServiceProvider
         $documentManager = resolve(DocumentManagerContract::class);
 
         $engineManager->extend('elastic', function () use ($indexManager, $documentManager) {
-            return new Engine($indexManager, $documentManager);
+            $config = config('scout_elasticsearch_driver.engine', []);
+            return new Engine($indexManager, $documentManager, $config);
         });
     }
 }

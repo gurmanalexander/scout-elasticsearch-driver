@@ -173,6 +173,11 @@ class BulkDocumentManagerTest extends AppTestCase
                 ->query()
                     ->matchAll(new stdClass())
                 ->end()
+                ->{'\sort'}()
+                    ->push()
+                        ->_id('asc')
+                    ->end()
+                ->end()
             ->end();
         // @formatter:on
 
