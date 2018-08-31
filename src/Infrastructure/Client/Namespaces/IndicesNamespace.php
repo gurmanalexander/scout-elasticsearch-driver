@@ -59,10 +59,28 @@ class IndicesNamespace implements IndicesNamespaceContract
     /**
      * @inheritdoc
      */
+    public function getSettings(array $params): array
+    {
+        return $this->adapteeIndices
+            ->getSettings($params);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function putMapping(array $params): array
     {
         return $this->adapteeIndices
             ->putMapping($params);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getMapping(array $params): array
+    {
+        return $this->adapteeIndices
+            ->getMapping($params);
     }
 
     /**

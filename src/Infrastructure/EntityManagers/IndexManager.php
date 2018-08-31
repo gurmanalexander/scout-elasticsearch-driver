@@ -80,7 +80,7 @@ class IndexManager implements IndexManagerContract
     /**
      * @inheritdoc
      */
-    public function updateSettings(Index $index, bool $force = false): IndexManagerContract
+    public function putSettings(Index $index, bool $force = false): IndexManagerContract
     {
         $settings = $index->getSettings();
 
@@ -120,7 +120,23 @@ class IndexManager implements IndexManagerContract
     /**
      * @inheritdoc
      */
-    public function updateMapping(Index $index): IndexManagerContract
+    public function getSettings(Index $index): Payload
+    {
+        $payload = (new Payload())
+            ->index($index->getName());
+
+        $response = $this->indices
+            ->getSettings($payload->toArray());
+
+        $settings = array_get($response, $index->getName() . '.settings.index');
+
+        return Payload::fromArray($settings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function putMapping(Index $index): IndexManagerContract
     {
         $mapping = $index->getMapping();
 
@@ -144,5 +160,21 @@ class IndexManager implements IndexManagerContract
             ->putMapping($payload->toArray());
 
         return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getMapping(Index $index): Payload
+    {
+        $payload = (new Payload())
+            ->index($index->getName());
+
+        $response = $this->indices
+            ->getMapping($payload->toArray());
+
+        $mapping = array_get($response, $index->getName() . '.mappings._doc');
+
+        return Payload::fromArray($mapping);
     }
 }

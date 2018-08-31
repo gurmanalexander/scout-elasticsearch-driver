@@ -55,7 +55,7 @@ class IndexManagerTest extends AppTestCase
         $this->assertFalse($this->client->indices()->exists($payload->toArray()));
     }
 
-    public function testUpdateSettingsMethodWithoutForce(): void
+    public function testPutSettingsMethodWithoutForce(): void
     {
         $this->expectExceptionMessageRegExp('/.*?Can\'t update non dynamic settings.*?/');
 
@@ -66,12 +66,12 @@ class IndexManagerTest extends AppTestCase
             ->create($payload->toArray());
 
         $this->indexManager
-            ->updateSettings($this->index);
+            ->putSettings($this->index);
 
         $this->addToAssertionCount(1);
     }
 
-    public function testUpdateSettingsMethodWithForce(): void
+    public function testPutSettingsMethodWithForce(): void
     {
         $payload = (new Payload())
             ->index($this->index->getName());
@@ -80,28 +80,83 @@ class IndexManagerTest extends AppTestCase
             ->create($payload->toArray());
 
         $this->indexManager
-            ->updateSettings($this->index, true);
+            ->putSettings($this->index, true);
 
-        $this->addToAssertionCount(1);
+        $settings = $this->client->indices()
+            ->getSettings($payload->toArray());
+
+        $this->assertArraySubset(
+            $this->index->getSettings()->toArray(),
+            array_get($settings, $this->index->getName() . '.settings.index')
+        );
     }
 
-    public function testUpdateMappingMethod(): void
+    public function testGetSettingsMethod(): void
     {
-        // @formatted:off
+        // @formatter:off
         $payload = (new Payload())
             ->index($this->index->getName())
             ->body()
                 ->settings($this->index->getSettings())
             ->end();
-        // @formatted:on
+        // @formatter:on
 
         $this->client->indices()
             ->create($payload->toArray());
 
-        $this->indexManager
-            ->updateMapping($this->index);
+        $this->assertArraySubset(
+            $this->index->getSettings()->toArray(),
+            $this->indexManager->getSettings($this->index)->toArray()
+        );
+    }
 
-        $this->addToAssertionCount(1);
+    public function testPutMappingMethod(): void
+    {
+        $basePayload = (new Payload())
+            ->index($this->index->getName());
+
+        // @formatter:off
+        $settingsPayload = (clone $basePayload)
+            ->body()
+                ->settings($this->index->getSettings())
+            ->end();
+        // @formatter:on
+
+        $this->client->indices()
+            ->create($settingsPayload->toArray());
+
+        $this->indexManager
+            ->putMapping($this->index);
+
+        $mapping = $this->client->indices()
+            ->getMapping($basePayload->toArray());
+
+        $this->assertSame(
+            $this->index->getMapping()->toArray(),
+            array_get($mapping, $this->index->getName() . '.mappings._doc')
+        );
+    }
+
+    public function testGetMappingMethod(): void
+    {
+        // @formatter:off
+        $payload = (new Payload())
+            ->index($this->index->getName())
+            ->body()
+                ->settings($this->index->getSettings())
+                ->mappings()
+                    ->_doc($this->index->getMapping())
+                ->end()
+            ->end();
+        // @formatter:on
+
+        $this->client->indices()
+            ->create($payload->toArray());
+
+        $this->assertSame(
+            $this->index->getMapping()->toArray(),
+            $this->indexManager->getMapping($this->index)->toArray()
+        );
     }
 
     /**

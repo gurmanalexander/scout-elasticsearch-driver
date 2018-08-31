@@ -32,7 +32,19 @@ interface IndicesNamespace
      * @param array $params
      * @return array
      */
+    public function getSettings(array $params): array;
+
+    /**
+     * @param array $params
+     * @return array
+     */
     public function putMapping(array $params): array;
+
+    /**
+     * @param array $params
+     * @return array
+     */
+    public function getMapping(array $params): array;
 
     /**
      * @param array $params
