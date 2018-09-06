@@ -21,7 +21,6 @@
     ],
     "require": {
         "php": "^7.1",
-        "babenkoivan/fluent-array": "@beta",
         "laravel/scout": "^5.0",
         "elasticsearch/elasticsearch": "^6.0"
     },
@@ -35,7 +34,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "BabenkoIvan\\ScoutElasticsearchDriver\\Tests\\": "tests/"
+            "BabenkoIvan\\ScoutElasticsearchDriver\\": "tests/"
         }
     },
     "extra": {

@@ -1,44 +1,45 @@
 <?php
+declare(strict_types = 1);
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Core\Entities;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
+use Illuminate\Support\Collection as BaseCollection;
 
-class Document
+final class Document
 {
     /**
-     * @var mixed
+     * @var string
      */
     private $id;
 
     /**
-     * @var Payload
+     * @var BaseCollection
      */
-    private $fields;
+    private $content;
 
     /**
-     * @param mixed $id
-     * @param Payload $fields
+     * @param string $id
+     * @param BaseCollection $content
      */
-    public function __construct($id, Payload $fields)
+    public function __construct(string $id, BaseCollection $content)
     {
         $this->id = $id;
-        $this->fields = $fields;
+        $this->content = $content;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getId()
+    public function getId(): string
     {
         return $this->id;
     }
 
     /**
-     * @return Payload
+     * @return BaseCollection
      */
-    public function getFields(): Payload
+    public function getContent(): BaseCollection
     {
-        return $this->fields;
+        return $this->content;
     }
 }

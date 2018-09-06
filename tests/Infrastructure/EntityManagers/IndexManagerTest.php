@@ -1,16 +1,18 @@
 <?php
+declare(strict_types = 1);
 
-namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Infrastructure\EntityManagers;
+namespace BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
-use BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers\IndexManager;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
+use BabenkoIvan\ScoutElasticsearchDriver\Dependencies\Client;
+use PHPUnit\Framework\TestCase;
 
-class IndexManagerTest extends AppTestCase
+class IndexManagerTest extends TestCase
 {
+    use Client;
+
     /**
-     * @var IndexStub
+     * @var Index
      */
     private $index;
 
@@ -19,144 +21,60 @@ class IndexManagerTest extends AppTestCase
      */
     private $indexManager;
 
-    public function testExistsMethod(): void
+    public function test_index_existence_can_be_checked(): void
     {
-        $payload = (new Payload())
-            ->index($this->index->getName());
-
-        $this->client->indices()
-            ->create($payload->toArray());
-
+        $this->createIndex($this->index->getName());
         $this->assertTrue($this->indexManager->exists($this->index));
     }
 
-    public function testCreateMethod(): void
+    public function test_index_can_be_created(): void
     {
         $this->indexManager
             ->create($this->index);
 
-        $payload = (new Payload())
-            ->index($this->index->getName());
+        $this->assertTrue($this->isIndexExists($this->index->getName()));
 
-        $this->assertTrue($this->client->indices()->exists($payload->toArray()));
+        // todo check settings and mapping
     }
 
-    public function testDeleteMethod(): void
+    public function test_index_can_be_deleted(): void
     {
-        $payload = (new Payload())
-            ->index($this->index->getName());
-
-        $this->client->indices()
-            ->create($payload->toArray());
+        $this->createIndex($this->index->getName());
 
         $this->indexManager
             ->delete($this->index);
 
-        $this->assertFalse($this->client->indices()->exists($payload->toArray()));
+        $this->assertFalse($this->isIndexExists($this->index->getName()));
     }
 
-    public function testPutSettingsMethodWithoutForce(): void
+    public function test_non_dynamic_settings_update_causes_exception_without_force(): void
     {
         $this->expectExceptionMessageRegExp('/.*?Can\'t update non dynamic settings.*?/');
 
-        $payload = (new Payload())
-            ->index($this->index->getName());
-
-        $this->client->indices()
-            ->create($payload->toArray());
+        $this->createIndex($this->index->getName());
 
         $this->indexManager
-            ->putSettings($this->index);
-
-        $this->addToAssertionCount(1);
+            ->updateSettings($this->index);
     }
 
-    public function testPutSettingsMethodWithForce(): void
+    public function test_settings_can_be_updated_with_force(): void
     {
-        $payload = (new Payload())
-            ->index($this->index->getName());
-
-        $this->client->indices()
-            ->create($payload->toArray());
+        $this->createIndex($this->index->getName());
 
         $this->indexManager
-            ->putSettings($this->index, true);
+            ->updateSettings($this->index, true);
 
-        $settings = $this->client->indices()
-            ->getSettings($payload->toArray());
-
-        $this->assertArraySubset(
-            $this->index->getSettings()->toArray(),
-            array_get($settings, $this->index->getName() . '.settings.index')
-        );
+        // todo check settings
     }
 
-    public function testGetSettingsMethod(): void
+    public function test_mapping_can_be_updated(): void
     {
-        // @formatter:off
-        $payload = (new Payload())
-            ->index($this->index->getName())
-            ->body()
-                ->settings($this->index->getSettings())
-            ->end();
-        // @formatter:on
-
-        $this->client->indices()
-            ->create($payload->toArray());
-
-        $this->assertArraySubset(
-            $this->index->getSettings()->toArray(),
-            $this->indexManager->getSettings($this->index)->toArray()
-        );
-    }
-
-    public function testPutMappingMethod(): void
-    {
-        $basePayload = (new Payload())
-            ->index($this->index->getName());
-
-        // @formatter:off
-        $createPayload = (clone $basePayload)
-            ->body()
-                ->settings($this->index->getSettings())
-            ->end();
-        // @formatter:on
-
-        $this->client->indices()
-            ->create($createPayload->toArray());
+        $this->createIndex($this->index->getName());
 
         $this->indexManager
-            ->putMapping($this->index);
+            ->updateMapping($this->index);
 
-        $mapping = $this->client->indices()
-            ->getMapping($basePayload->toArray());
-
-        $this->assertSame(
-            $this->index->getMapping()->toArray(),
-            array_get($mapping, $this->index->getName() . '.mappings._doc')
-        );
-    }
-
-    public function testGetMappingMethod(): void
-    {
-        // @formatter:off
-        $payload = (new Payload())
-            ->index($this->index->getName())
-            ->body()
-                ->settings($this->index->getSettings())
-                ->mappings()
-                    ->_doc($this->index->getMapping())
-                ->end()
-            ->end();
-        // @formatter:on
-
-        $this->client->indices()
-            ->create($payload->toArray());
-
-        $this->assertSame(
-            $this->index->getMapping()->toArray(),
-            $this->indexManager->getMapping($this->index)->toArray()
-        );
+       // todo check mapping
     }
 
     /**
@@ -166,29 +84,8 @@ class IndexManagerTest extends AppTestCase
     {
         parent::setUp();
 
-        // @formatter:off
-        $mapping = (new Payload())
-            ->properties()
-                ->content()
-                    ->type('text')
-                    ->analyzer('content')
-                ->end()
-            ->end();
-        // @formatter:on
-
-        // @formatter:off
-        $settings = (new Payload())
-            ->analysis()
-                ->analyzer()
-                    ->content()
-                        ->type('custom')
-                        ->tokenizer('whitespace')
-                    ->end()
-                ->end()
-            ->end();
-        // @formatter:on
-
-        $this->index = new IndexStub(null, $mapping, $settings);
+        // todo set settings & mapping
+        $this->index = new Index('test');
         $this->indexManager = new IndexManager($this->client);
     }
 }

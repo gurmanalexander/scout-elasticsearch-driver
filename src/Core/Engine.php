@@ -1,22 +1,23 @@
 <?php
+declare(strict_types = 1);
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Core;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager as DocumentManagerContract;
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\IndexManager as IndexManagerContract;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\IndexManager;
 use Illuminate\Support\Collection as BaseCollection;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine as ScoutEngine;
 
-class Engine extends ScoutEngine
+final class Engine extends ScoutEngine
 {
     /**
-     * @var IndexManagerContract
+     * @var IndexManager
      */
     private $indexManager;
 
     /**
-     * @var DocumentManagerContract
+     * @var DocumentManager
      */
     private $documentManager;
 
@@ -26,13 +27,13 @@ class Engine extends ScoutEngine
     private $config;
 
     /**
-     * @param IndexManagerContract $indexManager
-     * @param DocumentManagerContract $documentManager
+     * @param IndexManager $indexManager
+     * @param DocumentManager $documentManager
      * @param array $config
      */
     public function __construct(
-        IndexManagerContract $indexManager,
-        DocumentManagerContract $documentManager,
+        IndexManager $indexManager,
+        DocumentManager $documentManager,
         array $config = []
     ) {
         $this->indexManager = $indexManager;

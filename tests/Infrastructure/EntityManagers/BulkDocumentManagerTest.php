@@ -1,102 +1,83 @@
 <?php
+declare(strict_types = 1);
 
-namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Infrastructure\EntityManagers;
+namespace BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager as DocumentManagerContract;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Document;
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
-use BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers\BulkDocumentManager;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
-use Illuminate\Support\Collection;
-use stdClass;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
+use BabenkoIvan\ScoutElasticsearchDriver\Dependencies\Client;
+use PHPUnit\Framework\TestCase;
 
-class BulkDocumentManagerTest extends AppTestCase
+class BulkDocumentManagerTest extends TestCase
 {
+    use Client;
+
     /**
-     * @var IndexStub
+     * @var Index
      */
     private $index;
 
     /**
-     * @var DocumentManagerContract
+     * @var DocumentManager
      */
     private $documentManager;
 
-    public function testIndexMethodWithForce(): void
+    public function test_documents_can_be_indexed_with_force(): void
     {
-        $firstDocument = new Document(1, (new Payload())->content('first'));
-        $secondDocument = new Document(2, (new Payload())->content('second'));
-
-        $documents = collect([$firstDocument, $secondDocument]);
+        $documents = collect([
+            new Document('1', collect(['name' => 'foo'])),
+            new Document('2', collect(['name' => 'bar']))
+        ]);
 
         $this->documentManager
             ->index($this->index, $documents, true);
 
-        $this->assertEquals(
+        $this->assertSame(
             [
-                1 => [
-                    'content' => 'first'
+                '1' => [
+                    'name' => 'foo'
                 ],
-                2 => [
-                    'content' => 'second'
+                '2' => [
+                    'name' => 'bar'
                 ]
             ],
-            $this->getDocuments()->toArray()
+            $this->getIndexDocuments($this->index->getName())
         );
     }
 
-    public function testDeleteMethodWithForce(): void
+    public function test_documents_can_be_deleted_with_force(): void
     {
-        // @formatter:off
-        $payload = (new Payload())
-            ->index($this->index->getName())
-            ->type('_doc')
-            ->refresh('true')
-            ->body()
-                ->push()
-                    ->index()
-                        ->_id(1)
-                    ->end()
-                ->end()
-                ->push()
-                    ->content('foo')
-                ->end()
-                ->push()
-                    ->index()
-                        ->_id(2)
-                    ->end()
-                ->end()
-                ->push()
-                    ->content('bar')
-                ->end()
-            ->end();
-        // @formatter:on
-
-        $this->client
-            ->bulk($payload->toArray());
+        $this->createIndexDocuments($this->index->getName(), [
+            '1' => [
+                'name' => 'foo'
+            ],
+            '2' => [
+                'name' => 'bar'
+            ]
+        ]);
 
         $documents = collect([
-            new Document(1, (new Payload())->content('foo'))
+            new Document('1', collect(['name' => 'foo']))
         ]);
 
         $this->documentManager
             ->delete($this->index, $documents, true);
 
-        $this->assertEquals(
+        $this->assertSame(
             [
-                2 => [
-                    'content' => 'bar'
+                '2' => [
+                    'name' => 'bar'
                 ]
             ],
-            $this->getDocuments()->toArray()
+            $this->getIndexDocuments($this->index->getName())
         );
     }
 
-    public function testSearchMethod(): void
+    public function test_match_all_query_can_return_all_documents(): void
     {
         // @formatter:off
-        $createPayload = (new Payload())
+        /*$createPayload = (new Payload())
             ->index($this->index->getName())
             ->type('_doc')
             ->refresh('true')
@@ -127,10 +108,10 @@ class BulkDocumentManagerTest extends AppTestCase
                 ->push()
                     ->_id('asc')
                 ->end()
-            ->end();
+            ->end();*/
         // @formatter:on
 
-        $this->client
+        /*$this->client
             ->bulk($createPayload->toArray());
 
         $documents = $this->documentManager
@@ -140,7 +121,9 @@ class BulkDocumentManagerTest extends AppTestCase
         $this->assertEquals(1, $documents->get(0)->getId());
         $this->assertEquals(['content' => 'foo'], $documents->get(0)->getFields()->toArray());
         $this->assertEquals(2, $documents->get(1)->getId());
-        $this->assertEquals(['content' => 'bar'], $documents->get(1)->getFields()->toArray());
+        $this->assertEquals(['content' => 'bar'], $documents->get(1)->getFields()->toArray());*/
+
+        // todo
     }
 
     /**
@@ -150,42 +133,9 @@ class BulkDocumentManagerTest extends AppTestCase
     {
         parent::setUp();
 
-        $this->index = new IndexStub();
+        $this->index = new Index('test');
         $this->documentManager = new BulkDocumentManager($this->client);
 
-        $payload = (new Payload())
-            ->index($this->index->getName());
-
-        $this->client->indices()
-            ->create($payload->toArray());
-    }
-
-    /**
-     * @return Collection
-     */
-    private function getDocuments(): Collection
-    {
-        // @formatter:off
-        $payload = (new Payload())
-            ->index($this->index->getName())
-            ->type('_doc')
-            ->body()
-                ->query()
-                    ->matchAll(new stdClass())
-                ->end()
-                ->{'\sort'}()
-                    ->push()
-                        ->_id('asc')
-                    ->end()
-                ->end()
-            ->end();
-        // @formatter:on
-
-        $result = $this->client
-            ->search($payload->toArray());
-
-        return collect($result['hits']['hits'])->mapWithKeys(function (array $hit) {
-            return [$hit['_id'] => $hit['_source']];
-        });
+        $this->createIndex($this->index->getName());
     }
 }

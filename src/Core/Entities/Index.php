@@ -1,10 +1,12 @@
 <?php
+declare(strict_types = 1);
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Core\Entities;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Mapping\Mapping;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Settings\Settings;
 
-class Index
+final class Index
 {
     /**
      * @var string
@@ -12,28 +14,28 @@ class Index
     private $name;
 
     /**
-     * @var Payload
+     * @var Mapping
      */
     private $mapping;
 
     /**
-     * @var Payload
+     * @var Settings
      */
     private $settings;
 
     /**
      * @param string $name
-     * @param Payload|null $mapping
-     * @param Payload|null $settings
+     * @param Mapping|null $mapping
+     * @param Settings|null $settings
      */
     public function __construct(
         string $name,
-        Payload $mapping = null,
-        Payload $settings = null
+        Mapping $mapping = null,
+        Settings $settings = null
     ) {
         $this->name = config('scout.prefix') . $name;
-        $this->mapping = $mapping ?? new Payload();
-        $this->settings = $settings ?? new Payload();
+        $this->mapping = $mapping;
+        $this->settings = $settings;
     }
 
     /**
@@ -45,17 +47,17 @@ class Index
     }
 
     /**
-     * @return Payload
+     * @return Mapping|null
      */
-    public function getMapping(): Payload
+    public function getMapping(): ?Mapping
     {
         return $this->mapping;
     }
 
     /**
-     * @return Payload
+     * @return Settings|null
      */
-    public function getSettings(): Payload
+    public function getSettings(): ?Settings
     {
         return $this->settings;
     }

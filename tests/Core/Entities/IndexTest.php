@@ -1,18 +1,44 @@
 <?php
+declare(strict_types = 1);
 
-namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Core\Entities;
+namespace BabenkoIvan\ScoutElasticsearchDriver\Core\Entities;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
+use BabenkoIvan\ScoutElasticsearchDriver\Dependencies\App;
+use PHPUnit\Framework\TestCase;
 
-class IndexTest extends AppTestCase
+class IndexTest extends TestCase
 {
-    public function testNamePrefix(): void
+    use App;
+
+    /**
+     * @return array
+     */
+    public function prefixProvider(): array
+    {
+        return [
+            [''],
+            ['foo_']
+        ];
+    }
+
+    /**
+     * @dataProvider prefixProvider
+     * @testdox configured prefix "$prefix" can be added to index name
+     *
+     * @param string $prefix
+     */
+    public function test_configured_prefix_can_be_added_to_index_name(string $prefix): void
+    {
+        $name = 'test';
+        config(['scout.prefix' => $prefix]);
+        $this->assertSame($prefix . $name, (new Index($name))->getName());
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function tearDown()
     {
         config(['scout.prefix' => '']);
-        $this->assertSame('test', (new IndexStub())->getName());
-
-        config(['scout.prefix' => 'foo_']);
-        $this->assertSame('foo_test', (new IndexStub())->getName());
     }
 }

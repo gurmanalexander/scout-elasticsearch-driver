@@ -1,4 +1,5 @@
 <?php
+declare(strict_types = 1);
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Core;
 
@@ -24,10 +25,10 @@ trait Searchable
      */
     public function toSearchableDocument(): Document
     {
-        $id = $this->getKey();
-        $fields = Payload::fromArray($this->toSearchableArray());
+        $id = strval($this->getKey());
+        $content = collect($this->toSearchableArray());
 
-        return new Document($id, $fields);
+        return new Document($id, $content);
     }
 
     public function registerSearchableMacros(): void
@@ -35,7 +36,6 @@ trait Searchable
         $this->registerScoutSearchableMacros();
         $this->registerGetSearchableIndicesMacro();
         $this->registerToSearchableDocumentsMacro();
-
     }
 
     private function registerGetSearchableIndicesMacro(): void

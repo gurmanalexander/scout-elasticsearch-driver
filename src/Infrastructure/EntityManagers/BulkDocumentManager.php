@@ -1,22 +1,26 @@
 <?php
+declare(strict_types = 1);
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Client as ClientContract;
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager as DocumentManagerContract;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Client;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Document;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Search\Request;
 use Illuminate\Support\Collection as BaseCollection;
 
-class BulkDocumentManager implements DocumentManagerContract
+class BulkDocumentManager implements DocumentManager
 {
     /**
-     * @var ClientContract
+     * @var Client
      */
     private $client;
 
-    public function __construct(ClientContract $client)
+    /**
+     * @param Client $client
+     */
+    public function __construct(Client $client)
     {
         $this->client = $client;
     }
@@ -24,27 +28,30 @@ class BulkDocumentManager implements DocumentManagerContract
     /**
      * @inheritdoc
      */
-    public function index(Index $index, BaseCollection $collection, bool $force = false): DocumentManagerContract
+    public function index(Index $index, BaseCollection $collection, bool $force = false): DocumentManager
     {
-        $payload = (new Payload())
-            ->index($index->getName())
-            ->type('_doc')
-            ->refreshWhen($force, 'true');
+        $payload = [
+            'index' => $index->getName(),
+            'type' => DocumentManager::DEFAULT_TYPE,
+            'body' => []
+        ];
 
-        $collection->each(function (Document $document) use ($payload) {
-            // @formatter:off
-            $payload->body()
-                ->push()
-                    ->index()
-                        ->_id($document->getId())
-                    ->end()
-                ->end()
-                ->push($document->getFields());
-            // @formatter:on
+        $collection->each(function (Document $document) use (&$payload) {
+            $payload['body'][] = [
+                'index' => [
+                    '_id' => $document->getId()
+                ]
+            ];
+
+            $payload['body'][] = $document->getContent()->all();
         });
 
+        if ($force) {
+            $payload['refresh'] = 'true';
+        }
+
         $this->client
-            ->bulk($payload->toArray());
+            ->bulk($payload);
 
         return $this;
     }
@@ -52,26 +59,28 @@ class BulkDocumentManager implements DocumentManagerContract
     /**
      * @inheritdoc
      */
-    public function delete(Index $index, BaseCollection $collection, bool $force = false): DocumentManagerContract
+    public function delete(Index $index, BaseCollection $collection, bool $force = false): DocumentManager
     {
-        $payload = (new Payload())
-            ->index($index->getName())
-            ->type('_doc')
-            ->refreshWhen($force, 'true');
+        $payload = [
+            'index' => $index->getName(),
+            'type' => DocumentManager::DEFAULT_TYPE,
+            'body' => []
+        ];
 
-        $collection->each(function (Document $document) use ($payload) {
-            // @formatter:off
-            $payload->body()
-                ->push()
-                    ->delete()
-                        ->_id($document->getId())
-                    ->end()
-                ->end();
-            // @formatter:on
+        $collection->each(function (Document $document) use (&$payload) {
+            $payload['body'][] = [
+                'delete' => [
+                    '_id' => $document->getId()
+                ]
+            ];
         });
 
+        if ($force) {
+            $payload['refresh'] = 'true';
+        }
+
         $this->client
-            ->bulk($payload->toArray());
+            ->bulk($payload);
 
         return $this;
     }
@@ -79,21 +88,22 @@ class BulkDocumentManager implements DocumentManagerContract
     /**
      * @inheritdoc
      */
-    public function search(Index $index, Payload $payload): BaseCollection
+    public function search(Index $index, Request $request): BaseCollection
     {
-        $payload = (new Payload())
-            ->index($index->getName())
-            ->type('_doc')
-            ->body($payload);
+        $payload = [
+            'index' => $index->getName(),
+            'type' => DocumentManager::DEFAULT_TYPE,
+            'body' => $request->toArray()
+        ];
 
         $response = $this->client
-            ->search($payload->toArray());
+            ->search($payload);
 
         return collect($response['hits']['hits'])->map(function (array $hit) {
             $id = $hit['_id'];
-            $fields = Payload::fromArray($hit['_source']);
+            $content = collect($hit['_source']);
 
-            return new Document($id, $fields);
+            return new Document($id, $content);
         });
     }
 }

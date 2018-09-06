@@ -1,12 +1,13 @@
 <?php
+declare(strict_types = 1);
 
-namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs;
+namespace BabenkoIvan\ScoutElasticsearchDriver\Fixtures;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Searchable;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as BaseModel;
 
-class ModelStub extends Model
+class Model extends BaseModel
 {
     use Searchable;
 
@@ -31,7 +32,7 @@ class ModelStub extends Model
     public function __construct(array $attributes = [], Index $searchableIndex = null)
     {
         parent::__construct($attributes);
-        $this->searchableIndex = $searchableIndex ?? new IndexStub();
+        $this->searchableIndex = $searchableIndex ?? new Index('test');
     }
 
     /**

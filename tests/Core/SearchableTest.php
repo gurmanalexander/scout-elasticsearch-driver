@@ -1,17 +1,18 @@
 <?php
+declare(strict_types = 1);
 
-namespace BabenkoIvan\ScoutElasticsearchDriver\Tests\Core;
+namespace BabenkoIvan\ScoutElasticsearchDriver\Core;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\AppTestCase;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\IndexStub;
-use BabenkoIvan\ScoutElasticsearchDriver\Tests\Stubs\ModelStub;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
+use BabenkoIvan\ScoutElasticsearchDriver\Fixtures\Model;
 use Illuminate\Support\Collection;
+use PHPUnit\Framework\TestCase;
 
-class SearchableTest extends AppTestCase
+class SearchableTest extends TestCase
 {
-    public function testToSearchableDocumentMethod(): void
+    public function test_model_can_be_converted_to_searchable_document(): void
     {
-        $model = new ModelStub([
+        $model = new Model([
             'id' => 1,
             'name' => 'iphone 8',
             'price' => 800
@@ -19,56 +20,28 @@ class SearchableTest extends AppTestCase
 
         $document = $model->toSearchableDocument();
 
-        $this->assertSame($model->getKey(), $document->getId());
-        $this->assertSame($model->getAttributes(), $document->getFields()->toArray());
+        $this->assertSame(strval($model->getKey()), $document->getId());
+        $this->assertSame($model->getAttributes(), $document->getContent()->all());
     }
 
-    public function testGetSearchableIndicesMethod(): void
+    public function test_model_collection_can_be_converted_to_document_collection(): void
     {
-        $iphone6s = new ModelStub(
+        $iphone6s = new Model(
             [
                 'id' => 1,
                 'name' => 'iphone 6s',
                 'price' => 300
             ],
-            new IndexStub('old')
+            new Index('old')
         );
 
-        $iphoneX = new ModelStub(
+        $iphoneX = new Model(
             [
                 'id' => 2,
                 'name' => 'iphone x',
                 'price' => 1000
             ],
-            new IndexStub('new')
-        );
-
-        /** @var Collection $documents */
-        $indices = collect([$iphone6s, $iphoneX])->getSearchableIndices();
-
-        $this->assertSame(['old', 'new'], $indices->keys()->all());
-        $this->assertEquals($indices->get('old'), $iphone6s->getSearchableIndex());
-        $this->assertEquals($indices->get('new'), $iphoneX->getSearchableIndex());
-    }
-
-    public function testToSearchableDocumentsMethod(): void
-    {
-        $iphone6s = new ModelStub(
-            [
-                'id' => 1,
-                'name' => 'iphone 6s',
-                'price' => 300
-            ],
-            new IndexStub('old')
-        );
-
-        $iphoneX = new ModelStub(
-            [
-                'id' => 2,
-                'name' => 'iphone x',
-                'price' => 1000
-            ],
-            new IndexStub('new')
+            new Index('new')
         );
 
         /** @var Collection $documents */
@@ -79,5 +52,33 @@ class SearchableTest extends AppTestCase
         $this->assertInstanceOf(Collection::class, $documents->get('new'));
         $this->assertCount(1, $documents->get('old'));
         $this->assertCount(1, $documents->get('new'));
+    }
+
+    public function test_searchable_indices_can_be_collected_from_model_collection(): void
+    {
+        $iphone6s = new Model(
+            [
+                'id' => 1,
+                'name' => 'iphone 6s',
+                'price' => 300
+            ],
+            new Index('old')
+        );
+
+        $iphoneX = new Model(
+            [
+                'id' => 2,
+                'name' => 'iphone x',
+                'price' => 1000
+            ],
+            new Index('new')
+        );
+
+        /** @var Collection $documents */
+        $indices = collect([$iphone6s, $iphoneX])->getSearchableIndices();
+
+        $this->assertSame(['old', 'new'], $indices->keys()->all());
+        $this->assertEquals($indices->get('old'), $iphone6s->getSearchableIndex());
+        $this->assertEquals($indices->get('new'), $iphoneX->getSearchableIndex());
     }
 }

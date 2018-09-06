@@ -1,13 +1,16 @@
 <?php
+declare(strict_types = 1);
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Search\Request;
 use Illuminate\Support\Collection as BaseCollection;
 
 interface DocumentManager
 {
+    const DEFAULT_TYPE = '_doc';
+
     /**
      * @param Index $index
      * @param BaseCollection $collection
@@ -26,8 +29,8 @@ interface DocumentManager
 
     /**
      * @param Index $index
-     * @param Payload $payload
+     * @param Request $request
      * @return BaseCollection
      */
-    public function search(Index $index, Payload $payload): BaseCollection;
+    public function search(Index $index, Request $request): BaseCollection;
 }

@@ -1,24 +1,26 @@
 <?php
+declare(strict_types = 1);
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Client as ClientContract;
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Namespaces\IndicesNamespace as IndicesNamespaceContract;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Client;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Client\Namespaces\IndicesNamespace;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\IndexManager as IndexManagerContract;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Payload;
+use UnexpectedValueException;
 
 class IndexManager implements IndexManagerContract
 {
     /**
-     * @var IndicesNamespaceContract
+     * @var IndicesNamespace
      */
     private $indices;
 
     /**
-     * @param ClientContract $client
+     * @param Client $client
      */
-    public function __construct(ClientContract $client)
+    public function __construct(Client $client)
     {
         $this->indices = $client->indices();
     }
@@ -28,11 +30,12 @@ class IndexManager implements IndexManagerContract
      */
     public function exists(Index $index): bool
     {
-        $payload = (new Payload())
-            ->index($index->getName());
+        $payload = [
+            'index' => $index->getName()
+        ];
 
         return $this->indices
-            ->exists($payload->toArray());
+            ->exists($payload);
     }
 
     /**
@@ -43,22 +46,26 @@ class IndexManager implements IndexManagerContract
         $settings = $index->getSettings();
         $mapping = $index->getMapping();
 
-        $payload = (new Payload())
-            ->index($index->getName());
+        $payload = [
+            'index' => $index->getName()
+        ];
 
-        if ($settings->count() > 0) {
-            $payload->body()
-                ->settings($settings);
+        if (isset($settings) || isset($mapping)) {
+            $payload['body'] = [];
         }
 
-        if ($mapping->count() > 0) {
-            $payload->body()
-                ->mappings()
-                ->_doc($mapping);
+        if (isset($settings)) {
+            $payload['body']['settings'] = $settings->toArray();
+        }
+
+        if (isset($mapping)) {
+            $payload['body']['mappings'] = [
+                DocumentManager::DEFAULT_TYPE => $mapping->toArray()
+            ];
         }
 
         $this->indices
-            ->create($payload->toArray());
+            ->create($payload);
 
         return $this;
     }
@@ -68,11 +75,12 @@ class IndexManager implements IndexManagerContract
      */
     public function delete(Index $index): IndexManagerContract
     {
-        $payload = (new Payload())
-            ->index($index->getName());
+        $payload = [
+            'index' => $index->getName()
+        ];
 
         $this->indices
-            ->delete($payload->toArray());
+            ->delete($payload);
 
         return $this;
     }
@@ -80,38 +88,38 @@ class IndexManager implements IndexManagerContract
     /**
      * @inheritdoc
      */
-    public function putSettings(Index $index, bool $force = false): IndexManagerContract
+    public function updateSettings(Index $index, bool $force = false): IndexManagerContract
     {
         $settings = $index->getSettings();
 
-        if ($settings->count() == 0) {
-            throw new \UnexpectedValueException(sprintf(
-                '%s settings payload is empty',
+        if (!isset($settings)) {
+            throw new UnexpectedValueException(sprintf(
+                '%s settings are not specified',
                 $index->getName()
             ));
         }
 
-        $basePayload = (new Payload())
-            ->index($index->getName());
+        $basePayload = [
+            'index' => $index->getName()
+        ];
 
-        // @formatter:off
-        $settingsPayload = (clone $basePayload)
-            ->body()
-                ->settings($settings)
-            ->end();
-        // @formatter:on
+        $settingsPayload = array_merge($basePayload, [
+            'body' => [
+                'settings' => $settings->toArray()
+            ]
+        ]);
 
         if ($force) {
             $this->indices
-                ->close($basePayload->toArray());
+                ->close($basePayload);
         }
 
         $this->indices
-            ->putSettings($settingsPayload->toArray());
+            ->putSettings($settingsPayload);
 
         if ($force) {
             $this->indices
-                ->open($basePayload->toArray());
+                ->open($basePayload);
         }
 
         return $this;
@@ -120,61 +128,27 @@ class IndexManager implements IndexManagerContract
     /**
      * @inheritdoc
      */
-    public function getSettings(Index $index): Payload
-    {
-        $payload = (new Payload())
-            ->index($index->getName());
-
-        $response = $this->indices
-            ->getSettings($payload->toArray());
-
-        $settings = array_get($response, $index->getName() . '.settings.index');
-
-        return Payload::fromArray($settings);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function putMapping(Index $index): IndexManagerContract
+    public function updateMapping(Index $index): IndexManagerContract
     {
         $mapping = $index->getMapping();
 
-        if ($mapping->count() == 0) {
-            throw new \UnexpectedValueException(sprintf(
-                '%s mapping payload is empty',
+        if (!isset($mapping)) {
+            throw new UnexpectedValueException(sprintf(
+                '%s mapping is not specified',
                 $index->getName()
             ));
         }
 
-        // @formatter:off
-        $payload = (new Payload())
-            ->index($index->getName())
-            ->type('_doc')
-            ->body()
-                ->_doc($mapping)
-            ->end();
-        // @formatter:on
+        $payload = [
+            'index' => $index->getName(),
+            'body' => [
+                DocumentManager::DEFAULT_TYPE => $mapping->toArray()
+            ]
+        ];
 
         $this->indices
-            ->putMapping($payload->toArray());
+            ->putMapping($payload);
 
         return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getMapping(Index $index): Payload
-    {
-        $payload = (new Payload())
-            ->index($index->getName());
-
-        $response = $this->indices
-            ->getMapping($payload->toArray());
-
-        $mapping = array_get($response, $index->getName() . '.mappings._doc');
-
-        return Payload::fromArray($mapping);
     }
 }
