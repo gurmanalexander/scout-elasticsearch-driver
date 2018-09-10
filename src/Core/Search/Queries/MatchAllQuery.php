@@ -1,9 +1,9 @@
 <?php
 declare(strict_types = 1);
 
-namespace BabenkoIvan\ScoutElasticsearchDriver\Core\Core\Queries;
+namespace BabenkoIvan\ScoutElasticsearchDriver\Core\Search\Queries;
 
-use BabenkoIvan\ScoutElasticsearchDriver\Core\Core\Contracts\Queries\Query;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Search\Queries\Query;
 
 final class MatchAllQuery implements Query
 {

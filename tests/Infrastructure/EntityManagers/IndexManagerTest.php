@@ -1,9 +1,15 @@
 <?php
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Mapping\Mapping;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Mapping\Properties\TextProperty;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Settings\Analysis;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Settings\Analyzers\WhitespaceAnalyzer;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Settings\Basic;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Settings\Settings;
 use BabenkoIvan\ScoutElasticsearchDriver\Dependencies\Client;
 use PHPUnit\Framework\TestCase;
 
@@ -34,7 +40,15 @@ class IndexManagerTest extends TestCase
 
         $this->assertTrue($this->isIndexExists($this->index->getName()));
 
-        // todo check settings and mapping
+        $this->assertArraySubset(
+            $this->index->getSettings()->toArray(),
+            $this->getIndexSettings($this->index->getName())
+        );
+
+        $this->assertSame(
+            $this->index->getMapping()->toArray(),
+            $this->getIndexMapping($this->index->getName())
+        );
     }
 
     public function test_index_can_be_deleted(): void
@@ -64,17 +78,27 @@ class IndexManagerTest extends TestCase
         $this->indexManager
             ->updateSettings($this->index, true);
 
-        // todo check settings
+        $this->assertArraySubset(
+            $this->index->getSettings()->toArray(),
+            $this->getIndexSettings($this->index->getName())
+        );
     }
 
     public function test_mapping_can_be_updated(): void
     {
-        $this->createIndex($this->index->getName());
+        $this->createIndex(
+            $this->index->getName(),
+            null,
+            $this->index->getSettings()->toArray()
+        );
 
         $this->indexManager
             ->updateMapping($this->index);
 
-       // todo check mapping
+        $this->assertSame(
+            $this->index->getMapping()->toArray(),
+            $this->getIndexMapping($this->index->getName())
+        );
     }
 
     /**
@@ -84,8 +108,14 @@ class IndexManagerTest extends TestCase
     {
         parent::setUp();
 
-        // todo set settings & mapping
-        $this->index = new Index('test');
+        $analyzer = new WhitespaceAnalyzer('content');
+        $mapping = (new Mapping())->addProperty(new TextProperty('content', $analyzer));
+
+        $basic = new Basic();
+        $analysis = (new Analysis())->addAnalyzer($analyzer);
+        $settings = new Settings($basic, $analysis);
+
+        $this->index = new Index('test', $mapping, $settings);
         $this->indexManager = new IndexManager($this->client);
     }
 }

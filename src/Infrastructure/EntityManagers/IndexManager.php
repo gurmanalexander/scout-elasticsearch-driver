@@ -141,6 +141,7 @@ class IndexManager implements IndexManagerContract
 
         $payload = [
             'index' => $index->getName(),
+            'type' => DocumentManager::DEFAULT_TYPE,
             'body' => [
                 DocumentManager::DEFAULT_TYPE => $mapping->toArray()
             ]

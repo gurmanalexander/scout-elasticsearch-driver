@@ -34,24 +34,24 @@ trait Client
 
     /**
      * @param string $name
-     * @param array $mapping
-     * @param array $settings
+     * @param array|null $mapping
+     * @param array|null $settings
      */
-    protected function createIndex(string $name, array $mapping = [], array $settings = []): void
+    protected function createIndex(string $name, ?array $mapping = null, ?array $settings = null): void
     {
         $payload = [
             'index' => $name
         ];
 
-        if (!empty($settings) || !empty($mapping)) {
+        if (isset($settings) || isset($mapping)) {
             $payload['body'] = [];
         }
 
-        if (!empty($settings)) {
+        if (isset($settings)) {
             $payload['body']['settings'] = $settings;
         }
 
-        if (!empty($mapping)) {
+        if (isset($mapping)) {
             $payload['body']['mappings'] = [
                 DocumentManager::DEFAULT_TYPE => $mapping
             ];
