@@ -4,6 +4,7 @@ declare(strict_types = 1);
 namespace BabenkoIvan\ScoutElasticsearchDriver\Core\Search\Queries;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Search\Queries\Query;
+use stdClass;
 
 final class MatchAllQuery implements Query
 {
@@ -12,6 +13,8 @@ final class MatchAllQuery implements Query
      */
     public function toArray(): array
     {
-        // TODO: Implement toArray() method.
+        return [
+            'match_all' => new stdClass()
+        ];
     }
 }

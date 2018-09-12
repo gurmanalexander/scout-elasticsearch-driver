@@ -1,11 +1,15 @@
 <?php
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace BabenkoIvan\ScoutElasticsearchDriver\Infrastructure\EntityManagers;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\EntityManagers\DocumentManager;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Document;
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Entities\Index;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Search\Queries\MatchAllQuery;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Search\Request;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Search\Sort\Simple\FieldSort;
+use BabenkoIvan\ScoutElasticsearchDriver\Core\Search\Sort\Simple\SimpleSort;
 use BabenkoIvan\ScoutElasticsearchDriver\Dependencies\Client;
 use PHPUnit\Framework\TestCase;
 
@@ -76,54 +80,27 @@ class BulkDocumentManagerTest extends TestCase
 
     public function test_match_all_query_can_return_all_documents(): void
     {
-        // @formatter:off
-        /*$createPayload = (new Payload())
-            ->index($this->index->getName())
-            ->type('_doc')
-            ->refresh('true')
-            ->body()
-                ->push()
-                    ->index()
-                        ->_id(1)
-                    ->end()
-                ->end()
-                ->push()
-                    ->content('foo')
-                ->end()
-                ->push()
-                    ->index()
-                        ->_id(2)
-                    ->end()
-                ->end()
-                ->push()
-                    ->content('bar')
-                ->end()
-            ->end();
+        $this->createIndexDocuments($this->index->getName(), [
+            '1' => [
+                'name' => 'foo'
+            ],
+            '2' => [
+                'name' => 'bar'
+            ]
+        ]);
 
-        $searchPayload = (new Payload())
-            ->query()
-                ->matchAll(new stdClass())
-            ->end()
-            ->{'\sort'}()
-                ->push()
-                    ->_id('asc')
-                ->end()
-            ->end();*/
-        // @formatter:on
-
-        /*$this->client
-            ->bulk($createPayload->toArray());
+        $query = new MatchAllQuery();
+        $sort = (new SimpleSort())->addFieldSort(new FieldSort('_id', 'asc'));
+        $request = new Request($query, $sort);
 
         $documents = $this->documentManager
-            ->search($this->index, $searchPayload);
+            ->search($this->index, $request);
 
         $this->assertCount(2, $documents);
-        $this->assertEquals(1, $documents->get(0)->getId());
-        $this->assertEquals(['content' => 'foo'], $documents->get(0)->getFields()->toArray());
-        $this->assertEquals(2, $documents->get(1)->getId());
-        $this->assertEquals(['content' => 'bar'], $documents->get(1)->getFields()->toArray());*/
-
-        // todo
+        $this->assertSame('1', $documents->get(0)->getId());
+        $this->assertSame(['name' => 'foo'], $documents->get(0)->getContent()->all());
+        $this->assertSame('2', $documents->get(1)->getId());
+        $this->assertSame(['name' => 'bar'], $documents->get(1)->getContent()->all());
     }
 
     /**

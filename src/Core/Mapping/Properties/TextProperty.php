@@ -5,7 +5,7 @@ namespace BabenkoIvan\ScoutElasticsearchDriver\Core\Mapping\Properties;
 
 use BabenkoIvan\ScoutElasticsearchDriver\Core\Contracts\Settings\Analyzers\Analyzer;
 
-class TextProperty extends AbstractProperty
+final class TextProperty extends AbstractProperty
 {
     /**
      * @var Analyzer
